@@ -32,6 +32,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
   ) {
     parent::__construct($config_factory);
     $this->securepages_securepagesservice = $securepages_securepagesservice;
+    $this->is_https = \Drupal::request()->isSecure();
   }
 
   public static function create(ContainerInterface $container) {
@@ -47,7 +48,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'securepages.securepagesconfig_config'
+      'securepages.settings'
     ];
   }
 
@@ -62,13 +63,15 @@ class SecurePagesConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('securepages.securepagesconfig_config');
+
+    $config = $this->config('securepages.settings');
     $form['securepages_enable'] = array(
       '#type' => 'radios',
       '#title' => $this->t('Enable Secure Pages'),
       '#description' => $this->t('To start using secure pages this setting must be enabled. This setting will only be able to changed when the web server has been configured for SSL.<br />If this test has failed then go'),
       '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
       '#default_value' => $config->get('securepages_enable'),
+      '#disabled' => !$this->is_https,
     );
     $form['securepages_switch'] = array(
       '#type' => 'radios',
@@ -152,7 +155,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
 
-    $this->config('securepages.securepagesconfig_config')
+    $this->config('securepages.settings')
       ->set('securepages_enable', $form_state->getValue('securepages_enable'))
       ->set('securepages_switch', $form_state->getValue('securepages_switch'))
       ->set('securepages_basepath', $form_state->getValue('securepages_basepath'))

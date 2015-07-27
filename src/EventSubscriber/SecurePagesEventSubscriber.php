@@ -28,7 +28,6 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
     $response = $event->getResponse();
 
     $current_path = \Drupal::service('path.current')->getPath();
-    //$path_alias = \Drupal::service('path.alias_manager')->getAliasByPath($current_path, 'en');
 
     // Special path for verifying SSL status.
     if ($current_path == 'admin/config/system/securepages/test') {
@@ -46,7 +45,7 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
       }
     }
 
-    $config = \Drupal::config('securepages.securepagesconfig_config');
+    $config = \Drupal::config('securepages.settings');
     $securepages_enable = $config->get('securepages_enable');
 
     if ($securepages_enable && basename($_SERVER['PHP_SELF']) == 'index.php' && php_sapi_name() != 'cli') {
@@ -54,9 +53,8 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
 
-      //if($event->getRequest()->isMethod('GET') && $event->isMasterRequest()){
-
         if(is_null($redirect)) {
+
         }elseif($redirect == TRUE) {
           $url = Url::fromUri($event->getRequest()->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
           $event->setResponse(new RedirectResponse($url, 302));

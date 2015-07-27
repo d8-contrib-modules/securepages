@@ -16,26 +16,44 @@ use Drupal\simpletest\WebTestBase;
  */
 class SettingsFormTest extends WebTestBase {
 
-  public static $modules = array('securepages', 'comment', 'locale');
+  public static $modules = array(
+    'password_policy',
+    'password_policy_length',
+    'node'
+  );
 
   /**
-   * Test manual password reset.
+   * Test failing password and verify it fails.
    */
-  function testSettingsForm() {
-    // Undo the setUp() function.
-    //variable_del('securepages_enable');
-    $config = \Drupal::config('securepages.securepagesconfig_config');
-    $config->clear('securepages_enable')->save();
+  function testOwnUserPasswords() {
+    // Create password policy length.
+    $pid = db_insert('password_policy_length_policies')
+      ->fields(array('character_length' => '5'))
+      ->execute();
 
-    // Enable securepages.
-    $this->web_user = $this->drupalCreateUser(array('administer site configuration', 'access administration pages'));
-    $this->loginHTTPS($this->web_user);
-    $edit = array('securepages_enable' => 1);
-    $this->drupalPost('admin/config/system/securepages', $edit, t('Save configuration'), array('https' => TRUE));
-    $this->assertRaw(t('The configuration options have been saved.'));
+    // Create user with permission to create policy.
+    $user1 = $this->drupalCreateUser(array('enforce password_policy_length_constraint.' . $pid . ' constraint'));
 
-    // Clean up
-    $this->drupalLogout();
+    $this->drupalLogin($user1);
+
+    // Try failing password on form submit.
+    $edit = array();
+    $edit['current_pass'] = $user1->pass_raw;
+    $edit['pass'] = '111';
+    $this->drupalPostForm("user/" . $user1->id() . "/edit", $edit, t('Save'));
+
+    $this->assertText('The password does not satisfy the password policies');
+
+    // Try failing password on AJAX.
+
+    // Try passing password on form submit.
+    $edit = array();
+    $edit['current_pass'] = $user1->pass_raw;
+    $edit['pass'] = '111111';
+    $this->drupalPostForm("user/" . $user1->id() . "/edit", $edit, t('Save'));
+
+    $this->assertNoText('The password does not satisfy the password policies');
+
+    // Try passing password on AJAX.
   }
-
 }

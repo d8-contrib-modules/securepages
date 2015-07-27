@@ -20,7 +20,7 @@ class SecurePagesTestCase extends WebTestBase {
   }
 
   function setUp() {
-    $config = \Drupal::config('securepages.securepagesconfig_config');
+    $config = \Drupal::config('securepages.settings');
     parent::setUp('securepages', 'comment', 'locale', 'overlay');
     //variable_set('https', TRUE);
     $config->set('https', 1);
@@ -53,7 +53,7 @@ class SecurePagesTestCase extends WebTestBase {
   function _testSettingsForm() {
     // Undo the setUp() function.
     //variable_del('securepages_enable');
-    $config = \Drupal::config('securepages.securepagesconfig_config');
+    $config = \Drupal::config('securepages.settings');
     $config->clear('securepages_enable')->save();
 
     // Enable securepages.
@@ -72,7 +72,7 @@ class SecurePagesTestCase extends WebTestBase {
    */
   function _testMatch() {
     global $is_https;
-    $config = \Drupal::config('securepages.securepagesconfig_config');
+    $config = \Drupal::config('securepages.settings');
     $config->set('securepages_ignore', '*/autocomplete/*');
     $config->save();
     //variable_set('securepages_ignore', '*/autocomplete/*');
@@ -94,7 +94,7 @@ class SecurePagesTestCase extends WebTestBase {
   function _testLocale() {
     // Enable "Switch back to http pages when there are no matches".
     //variable_set('securepages_switch', TRUE);
-    $config = \Drupal::config('securepages.securepagesconfig_config');
+    $config = \Drupal::config('securepages.settings');
     $config->set('securepages_switch', TRUE);
     $config->save();
 

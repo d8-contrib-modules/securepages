@@ -3,48 +3,18 @@
  * @file
  * Allows certain pages to be viewable only via HTTPS.
  */
-/**
- * Defines defaults for SECUREPAGES_PAGES.
- */
-define('SECUREPAGES_PAGES',
-'node/add*
-node/*/edit
-node/*/delete
-user
-user/*
-admin
-admin/*'
-);
-
-/**
- * Defines defaults for SECUREPAGES_IGNORE.
- */
-define('SECUREPAGES_IGNORE', '');
-
-/**
- * Defines defaults for SECUREPAGES_FORMS.
- */
-define('SECUREPAGES_FORMS', 'user_login
-user_login_block');
-/**
-* Implements hook_form_alter().
-*/
 
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Url;
 
-
-
 function securepages_form_alter(&$form, &$form_state, $form_id) {
-
   global  $is_https, $user, $language;
-  $config = \Drupal::config('securepages.securepagesconfig_config');
+
+  $config = \Drupal::config('securepages.settings');
   $securepages_enable = $config->get('securepages_enable');
   $securepages_switch = $config->get('securepages_switch');
   $securepagesservice = \Drupal::service('securepages.securepagesservice');
 
-
-  //$is_https = \Drupal::request()->isSecure();
   if (!$securepages_enable) {
     return;
   }
@@ -57,16 +27,17 @@ function securepages_form_alter(&$form, &$form_state, $form_id) {
     $url = substr(rawurldecode($form['#action']), strlen(base_path()));
     // Filter out any language prefixes as it will be automatically added to
     // the URL again.
-    // @todo: language
+    // @todo: language prefix
+    $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
     if (!empty($language->prefix) && preg_match('/^' . $language->prefix . '/', $url) > 0) {
       $url = preg_replace('/^' . $language->prefix . '\//', '', $url);
     }
     $url = UrlHelper::parse($url);
-    // @todo: language
+
     $path = \Drupal::service('path.alias_manager')->getPathByAlias($url['path'], $langcode);
     $page_match = $securepagesservice->securePagesMatch($path);
     $role_match = $securepagesservice->securePagesRoles($user);
-
 
     if ($role_match) {
       if (!$is_https) {
@@ -75,17 +46,17 @@ function securepages_form_alter(&$form, &$form_state, $form_id) {
       return;
     }
 
-        if (isset($form['#https'])) {
+    if (isset($form['#https'])) {
           // if the #https is set don't reset it as module that set it knows better.
-        }
-        elseif ($page_match && !$is_https) {
-          $form['#https'] = TRUE;
-        }
-        elseif ($page_match === 0 && $is_https && $securepages_switch) {
-          $url['https'] = FALSE;
-          $url['absolute'] = TRUE;
-          $form['#action'] = Url::fromUri($url['path'], $url)->toString();
-        }
+    }
+    elseif ($page_match && !$is_https) {
+      $form['#https'] = TRUE;
+    }
+    elseif ($page_match === 0 && $is_https && $securepages_switch) {
+      $url['https'] = FALSE;
+      $url['absolute'] = TRUE;
+      $form['#action'] = Url::fromUri($url['path'], $url)->toString();
+    }
   }
 
   // Check to see if this form needs to be secured.
@@ -102,7 +73,7 @@ function securepages_form_alter(&$form, &$form_state, $form_id) {
 function securepages_match_form($form_id, $args = array()) {
   $forms = & drupal_static(__FUNCTION__);
   $securepagesservice = \Drupal::service('securepages.securepagesservice');
-  $config = \Drupal::config('securepages.securepagesconfig_config');
+  $config = \Drupal::config('securepages.settings');
   $securepages_forms = $config->get('securepages_forms');
 
   $form_match = \Drupal::service('path.matcher')->matchPath($form_id, $securepages_forms);
