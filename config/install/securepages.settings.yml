@@ -1,0 +1,10 @@
+securepages_enable: FALSE
+securepages_secure: 1
+securepages_ignore: ''
+securepages_switch: FALSE
+securepages_basepath: ''
+securepages_basepath_ssl: ''
+securepages_pages: "node/add*\nnode/*/edit\nnode/*/delete\nuser\nuser/*\nadmin\nadmin/*"
+securepages_roles: []
+securepages_forms: "user_login\nuser_login_block"
+securepages_debug: 0

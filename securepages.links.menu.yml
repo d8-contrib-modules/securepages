@@ -1,0 +1,5 @@
+securepages.settings:
+  title: 'Secure pages'
+  parent: system.admin_config_system
+  description: 'Configure which pages are and are not to be viewed in SSL.'
+  route_name: securepages.secure_pages_config_form

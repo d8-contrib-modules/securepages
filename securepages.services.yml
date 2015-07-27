@@ -1,0 +1,7 @@
+services:
+  securepages.securepagesservice:
+    class: Drupal\securepages\SecurePagesService
+  securepages.securepagesscriber:
+    class: Drupal\securepages\EventSubscriber\SecurePagesEventSubscriber
+    tags:
+      - { name: event_subscriber }
