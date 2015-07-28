@@ -71,7 +71,6 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#description' => $this->t('To start using secure pages this setting must be enabled. This setting will only be able to changed when the web server has been configured for SSL.<br />If this test has failed then go'),
       '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
       '#default_value' => $config->get('securepages_enable'),
-      '#disabled' => !$this->is_https,
     );
     $form['securepages_switch'] = array(
       '#type' => 'radios',
