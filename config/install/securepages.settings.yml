@@ -1,4 +1,4 @@
-securepages_enable: '1'
+securepages_enable: '0'
 securepages_secure: '1'
 securepages_switch: '1'
 securepages_basepath: ''
