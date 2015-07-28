@@ -50,30 +50,28 @@ class SecurePagesService {
     $page_match = $this->securePagesMatch($current_path);
     $role_match = $this->securePagesRoles($account);
 
-    $return_value = NULL;
-
     if($this->request_method == 'POST') {
-        $this->securepages_log('POST request skipped in service', $this->path);
+      $this->securepages_log('POST request skipped in service', $this->path);
+
     }elseif ($role_match && !$this->is_https) {
       $this->securepages_log('Switch User to secure', $this->path);
       return TRUE;
-
     }
     elseif ($page_match && !$this->is_https) {
       $this->securepages_log('Switch Path to secure', $this->path);
       return TRUE;
-
     }
     elseif ($page_match === 0 && $this->is_https && $this->securepages_switch && !$role_match) {
       $this->securepages_log('Switch Path to insecure (Path: "@path")', $this->path);
       return FALSE;
 
     }
+
     // Correct the base_url so that everything comes from HTTPS.
     if ($this->is_https) {
       $this->base_url = $this->securepages_baseurl();
     }
-
+    return NULL;
 
   }
 
