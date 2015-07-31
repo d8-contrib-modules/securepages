@@ -1,1 +1,38 @@
 # Schema for configuration files of the SecurePages module.
+securepages.settings:
+  type: config_object
+  label: 'Securepages settings'
+  mapping:
+    securepages_enable:
+      type: int
+      label: 'Securepages enabled?'
+    securepages_secure:
+      type: int
+      label: 'Make secure every page except the listed pages/ Make secure only the listed pages'
+    securepages_switch:
+      type: int
+      label: 'Switch back to http pages when there are no matches'
+    securepages_basepath:
+      type: string
+      label: 'Non-secure Base URL'
+    securepages_basepath_ssl:
+      type: string
+      label: 'Secure Base URL'
+    securepages_pages:
+      type: string
+      label: 'Pages to secure'
+    securepages_ignore:
+      type: string
+      label: 'Pages to ignore'
+    securepages_roles:
+      type: sequence
+      label: 'Roles'
+      sequence:
+        type: string
+        label: 'Role'
+    securepages_forms:
+      type: string
+      label: 'Secure forms'
+    securepages_debug:
+      type: int
+      label: 'Enable Debugging'
