@@ -4,13 +4,13 @@ securepages.settings:
   label: 'Securepages settings'
   mapping:
     securepages_enable:
-      type: int
+      type: integer
       label: 'Securepages enabled?'
     securepages_secure:
-      type: int
+      type: integer
       label: 'Make secure every page except the listed pages/ Make secure only the listed pages'
     securepages_switch:
-      type: int
+      type: integer
       label: 'Switch back to http pages when there are no matches'
     securepages_basepath:
       type: string
@@ -34,5 +34,5 @@ securepages.settings:
       type: string
       label: 'Secure forms'
     securepages_debug:
-      type: int
+      type: integer
       label: 'Enable Debugging'
