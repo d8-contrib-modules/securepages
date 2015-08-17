@@ -68,16 +68,9 @@ class SecurePagesConfigForm extends ConfigFormBase {
     $form['securepages_enable'] = array(
       '#type' => 'radios',
       '#title' => $this->t('Enable Secure Pages'),
-      '#description' => $this->t('To start using secure pages this setting must be enabled. This setting will only be able to changed when the web server has been configured for SSL.<br />If this test has failed then go'),
+      '#description' => $this->t('To start using secure pages this setting must be enabled. This setting will only be able to changed when the web server has been configured for SSL.<br />If this test has failed then these options will not be available. Check your web server settings.'),
       '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
       '#default_value' => $config->get('securepages_enable'),
-    );
-    $form['securepages_switch'] = array(
-      '#type' => 'radios',
-      '#title' => $this->t('Switch back to http pages when there are no matches'),
-      '#description' => $this->t(''),
-      '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
-      '#default_value' => $config->get('securepages_switch'),
     );
     $form['securepages_basepath'] = array(
       '#type' => 'textfield',
@@ -91,18 +84,25 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#description' => $this->t(''),
       '#default_value' => $config->get('securepages_basepath_ssl'),
     );
-    $form['securepages_secure'] = array(
-      '#type' => 'radios',
-      '#title' => $this->t('Pages which will be be secure'),
-      '#description' => $this->t(''),
-      '#options' => array($this->t('Make secure every page except the listed pages') ,  $this->t('Make secure only the listed pages')),
-      '#default_value' => $config->get('securepages_secure'),
-    );
     $form['securepages_pages'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Pages'),
       '#description' => $this->t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are '<em>blog</em>' for the main blog page and '<em>blog/*</em>' for every personal blog. '<em>&lt;front&gt;</em>' is the front page."),
       '#default_value' => $config->get('securepages_pages'),
+    );
+    $form['securepages_secure'] = array(
+      '#type' => 'radios',
+      '#title' => $this->t('Pages which will be be secure'),
+      '#description' => $this->t(''),
+      '#options' => array($this->t('Make secure every page except the listed pages above') ,  $this->t('Make secure only the listed pages above')),
+      '#default_value' => $config->get('securepages_secure'),
+    );
+    $form['securepages_switch'] = array(
+      '#type' => 'radios',
+      '#title' => $this->t('Switch back to http pages when there are no matches to list of pages above.'),
+      '#description' => $this->t(''),
+      '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
+      '#default_value' => $config->get('securepages_switch'),
     );
     $form['securepages_ignore'] = array(
       '#type' => 'textarea',
