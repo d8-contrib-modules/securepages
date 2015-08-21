@@ -50,13 +50,15 @@ CONFIGURATION
 -------------
 
 Options for this module can be set by visiting the configuration page
-at admin/config/securepages or Configuration > System > Secure Pages.
+at admin/config/securepages or Configuration > System > Secure Pages. Options
+include a master toggle to enable this module. Specific settings will be
+retained whether the module is enabled or not.
 
- * Enable the module
+ * Enable the module using listed settings below
  * Base URLs for secure and non-secure pages
- * Enter a list of paths to match to enable secure pages (node/*/edit, for example)
- * Tickbox to set matching of above list or all but this list
- * Enable if no matches specified in above list switch back to http
+ * Enter a list of paths to match to enable secure pages (node/\*/edit, for example)
+   * Enable matching against above list or all but this above list
+   * Enable if no matches specified in above list switch back to http
  * Enter a list of paths to ignore (<front> for example)
  * Enable secure pages always for specific user roles (administrator, for example)
  * Enter a list of specific form id machine names to enable secure pages
@@ -75,5 +77,6 @@ MAINTAINERS
 
 Current maintainers:
 
+ * Stephen Dix (jsdix) (https://www.drupal.org/user/422902)
  * Adam Bergstein (nerdstein) (https://www.drupal.org/user/1557710)
 
