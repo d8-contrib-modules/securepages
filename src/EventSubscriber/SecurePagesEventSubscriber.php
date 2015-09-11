@@ -46,6 +46,7 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
       $redirect = $securepagesservice->securePagesRedirect();
       $securepages_baseurl = $securepagesservice->securepages_baseurl($redirect);
       $request = $event->getRequest();
+      //Replaces current URL with the one set by the user.
       $uri = str_replace($request->getSchemeAndHttpHost(), $securepages_baseurl, $request->getUri());
 
         if(is_null($redirect)) {
