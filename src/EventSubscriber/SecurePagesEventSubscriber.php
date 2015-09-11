@@ -52,6 +52,9 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
         if(is_null($redirect)) {
 
         }elseif($redirect == TRUE) {
+          //Unset destination parameter so this won't redirect in this request
+          $request->query->remove('destination');
+
           $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => TRUE))->toString();
           $event->setResponse(new TrustedRedirectResponse($url, 302));
         }elseif($redirect == FALSE){
