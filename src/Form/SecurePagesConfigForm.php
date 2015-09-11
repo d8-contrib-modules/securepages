@@ -73,13 +73,13 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('securepages_enable'),
     );
     $form['securepages_basepath'] = array(
-      '#type' => 'textfield',
+      '#type' => 'url',
       '#title' => $this->t('Non-secure Base URL'),
       '#description' => $this->t(''),
       '#default_value' => $config->get('securepages_basepath'),
     );
     $form['securepages_basepath_ssl'] = array(
-      '#type' => 'textfield',
+      '#type' => 'url',
       '#title' => $this->t('Secure Base URL'),
       '#description' => $this->t(''),
       '#default_value' => $config->get('securepages_basepath_ssl'),

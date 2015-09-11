@@ -7,6 +7,7 @@
 
 namespace Drupal\securepages\EventSubscriber;
 
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Url;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -52,15 +53,21 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
+      $securepages_baseurl = $securepagesservice->securepages_baseurl($redirect);
+      $request = $event->getRequest();
+      $uri = str_replace($request->getSchemeAndHttpHost(), $securepages_baseurl, $request->getUri());
 
         if(is_null($redirect)) {
 
         }elseif($redirect == TRUE) {
-          $url = Url::fromUri($event->getRequest()->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
-          $event->setResponse(new RedirectResponse($url, 302));
+          $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => TRUE))->toString();
+          $event->setResponse(new TrustedRedirectResponse($url, 302));
         }elseif($redirect == FALSE){
-          $url = Url::fromUri($event->getRequest()->getUri(), array('absolute' => TRUE, 'https' => FALSE))->toString();
-          $event->setResponse(new RedirectResponse($url, 302));
+          if(!empty($request->query->get('destination'))){
+            return;
+          }
+          $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => FALSE))->toString();
+          $event->setResponse(new TrustedRedirectResponse($url, 302));
         }
 
         // Store the response in the page cache.
