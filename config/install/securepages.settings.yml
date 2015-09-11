@@ -1,6 +1,7 @@
 securepages_enable: 0
 securepages_secure: 1
 securepages_switch: 1
+securepages_entire_site: 1
 securepages_basepath: ''
 securepages_basepath_ssl: ''
 securepages_pages: "node/add*\nnode/*/edit\nnode/*/delete\nuser\nuser/*\nadmin\nadmin/*"
