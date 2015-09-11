@@ -58,27 +58,27 @@ class SecurePagesService {
     }
 
     if($this->request_method == 'POST') {
-      $this->securepages_log('POST request skipped in service', $this->path);
+      $this->securePagesLog('POST request skipped in service', $this->path);
 
     }elseif ($this->securepages_entire_site && !$this->is_https) {
-      $this->securepages_log('Switch to secure(force SSL for entire site)', $this->path);
+      $this->securePagesLog('Switch to secure(force SSL for entire site)', $this->path);
       return TRUE;
     }elseif ($role_match && !$this->is_https) {
-      $this->securepages_log('Switch User to secure', $this->path);
+      $this->securePagesLog('Switch User to secure', $this->path);
       return TRUE;
     }
     elseif ($page_match && !$this->is_https) {
-      $this->securepages_log('Switch Path to secure', $this->path);
+      $this->securePagesLog('Switch Path to secure', $this->path);
       return TRUE;
     }
     elseif ($page_match === 0 && $this->is_https && $this->securepages_switch && !$role_match) {
-      $this->securepages_log('Switch Path to insecure (Path: "@path")', $this->path);
+      $this->securePagesLog('Switch Path to insecure (Path: "@path")', $this->path);
       return FALSE;
     }
 
     // Correct the base_url so that everything comes from HTTPS.
     if ($this->is_https) {
-      $this->base_url = $this->securepages_baseurl();
+      $this->base_url = $this->securePagesBaseUrl();
     }
     return NULL;
 
@@ -125,7 +125,7 @@ class SecurePagesService {
 
        }
        if ($result) {
-         //$this->securepages_log('Ignored path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_ignore);
+         //$this->securePagesLog('Ignored path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_ignore);
          return $this->is_https ? 1 : 0;
        }
     }
@@ -141,7 +141,7 @@ class SecurePagesService {
       }
 
       if (!($this->securepages_secure xor $result)) {
-        //$this->securepages_log('Secure path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_pages);
+        //$this->securePagesLog('Secure path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_pages);
       }
 
       return !($this->securepages_secure xor $result) ? 1 : 0;
@@ -183,7 +183,7 @@ class SecurePagesService {
   /**
    * Returns the secure base path.
    */
-  public function securepages_baseurl($secure = TRUE) {
+  public function securePagesBaseUrl($secure = TRUE) {
     global $base_url;
 
     if ($secure) {
@@ -208,7 +208,7 @@ class SecurePagesService {
    *
    * @return boolean
    */
-  public function securepages_can_alter_url($url) {
+  public function securePagesCanAlterUrl($url) {
     global $base_path, $base_url;
 
     $url = @parse_url($url);
@@ -231,7 +231,7 @@ class SecurePagesService {
     return TRUE;
   }
 
-  public function securepages_log($text, $path, $pattern = NULL) {
+  public function securePagesLog($text, $path, $pattern = NULL) {
 
     if ($this->securepages_debug) {
       $options = array(

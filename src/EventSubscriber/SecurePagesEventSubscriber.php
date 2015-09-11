@@ -44,36 +44,22 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
-<<<<<<< HEAD
+      $securePagesBaseUrl = $securepagesservice->securePagesBaseUrl($redirect);
       $request = $event->getRequest();
-=======
-      $securepages_baseurl = $securepagesservice->securepages_baseurl($redirect);
-      $request = $event->getRequest();
-      //Replaces current URL with the one set by the user.
-      $uri = str_replace($request->getSchemeAndHttpHost(), $securepages_baseurl, $request->getUri());
->>>>>>> 0e4abbec11f4cb5b2b9adffbb5bbe15169a286d5
+      //Replaces current URL with the one defined in the module's settings page.
+      $uri = str_replace($request->getSchemeAndHttpHost(), $securePagesBaseUrl, $request->getUri());
 
         if(is_null($redirect)) {
 
         }elseif($redirect == TRUE) {
-<<<<<<< HEAD
           //Unset destination parameter so this won't redirect in this request
           $request->query->remove('destination');
-          $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
-          $event->setResponse(new RedirectResponse($url, 302));
-        }elseif($redirect == FALSE){
-          $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => FALSE))->toString();
-          $event->setResponse(new RedirectResponse($url, 302));
-=======
+
           $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => TRUE))->toString();
           $event->setResponse(new TrustedRedirectResponse($url, 302));
         }elseif($redirect == FALSE){
-          if(!empty($request->query->get('destination'))){
-            return;
-          }
           $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => FALSE))->toString();
           $event->setResponse(new TrustedRedirectResponse($url, 302));
->>>>>>> 0e4abbec11f4cb5b2b9adffbb5bbe15169a286d5
         }
 
         // Store the response in the page cache.
