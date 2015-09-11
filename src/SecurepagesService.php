@@ -14,6 +14,7 @@ class SecurePagesService {
   protected $is_https;
   protected $path;
   protected $securepages_switch;
+  protected $securepages_entire_site;
   protected $securepages_basepath;
   protected $securepages_basepath_ssl;
   protected $request_method;
@@ -31,6 +32,7 @@ class SecurePagesService {
     $this->request_method = \Drupal::request()->getMethod();
     $this->path = \Drupal::service('path.current')->getPath() ? \Drupal::service('path.current')->getPath() : '';
     $this->securepages_switch = $this->config->get('securepages_switch');
+    $this->securepages_entire_site = $this->config->get('securepages_entire_site');
     $this->securepages_basepath = $this->config->get('securepages_basepath');
     $this->securepages_basepath_ssl = $this->config->get('securepages_basepath_ssl');
     $this->securepages_secure = $this->config->get('securepages_secure');
@@ -43,15 +45,24 @@ class SecurePagesService {
 
   public function securePagesRedirect() {
 
-    $current_path = \Drupal::service('path.current')->getPath();
-    $account = \Drupal::currentUser();
+    //If user selected to force SSL for the entire site, there's no need to check pages and roles
+    if(!$this->securepages_entire_site) {
+      $current_path = \Drupal::service('path.current')->getPath();
+      $account = \Drupal::currentUser();
 
-    $page_match = $this->securePagesMatch($current_path);
-    $role_match = $this->securePagesRoles($account);
+      $page_match = $this->securePagesMatch($current_path);
+      $role_match = $this->securePagesRoles($account);
+    }else{
+      $page_match = TRUE;
+      $role_match = TRUE;
+    }
 
     if($this->request_method == 'POST') {
       $this->securepages_log('POST request skipped in service', $this->path);
 
+    }elseif ($this->securepages_entire_site && !$this->is_https) {
+      $this->securepages_log('Switch to secure(force SSL for entire site)', $this->path);
+      return TRUE;
     }elseif ($role_match && !$this->is_https) {
       $this->securepages_log('Switch User to secure', $this->path);
       return TRUE;
@@ -63,7 +74,6 @@ class SecurePagesService {
     elseif ($page_match === 0 && $this->is_https && $this->securepages_switch && !$role_match) {
       $this->securepages_log('Switch Path to insecure (Path: "@path")', $this->path);
       return FALSE;
-
     }
 
     // Correct the base_url so that everything comes from HTTPS.
