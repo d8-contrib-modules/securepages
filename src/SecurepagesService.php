@@ -8,7 +8,6 @@
 namespace Drupal\securepages;
 
 use Drupal\Component\Utility\Unicode;
-use \Drupal\Component\Utility\UrlHelper;
 
 class SecurePagesService {
   protected $config;
@@ -194,11 +193,11 @@ class SecurePagesService {
       $url = $this->securepages_basepath;
     }
 
-    if (!empty($url)) {
-      return $url;
+    if (empty($url)) {
+      $url = $base_url;
     }
     // No url has been set, so convert the base_url from 1 to the other
-    return preg_replace('/http[s]?:\/\//i', ($secure ? 'https://' : 'http://'), $base_url, 1);
+    return preg_replace('/http[s]?:\/\//i', ($secure ? 'https://' : 'http://'), $url, 1);
   }
 
   /**

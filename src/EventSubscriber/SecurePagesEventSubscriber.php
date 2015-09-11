@@ -7,19 +7,11 @@
 
 namespace Drupal\securepages\EventSubscriber;
 
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Url;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Cmf\Component\Routing\RouteObjectInterface;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints\True;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Routing\RequestContext;
-use Drupal\Core\Session\AccountInterface;
 
 class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
@@ -52,11 +44,19 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
+<<<<<<< HEAD
       $request = $event->getRequest();
+=======
+      $securepages_baseurl = $securepagesservice->securepages_baseurl($redirect);
+      $request = $event->getRequest();
+      //Replaces current URL with the one set by the user.
+      $uri = str_replace($request->getSchemeAndHttpHost(), $securepages_baseurl, $request->getUri());
+>>>>>>> 0e4abbec11f4cb5b2b9adffbb5bbe15169a286d5
 
         if(is_null($redirect)) {
 
         }elseif($redirect == TRUE) {
+<<<<<<< HEAD
           //Unset destination parameter so this won't redirect in this request
           $request->query->remove('destination');
           $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
@@ -64,6 +64,16 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
         }elseif($redirect == FALSE){
           $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => FALSE))->toString();
           $event->setResponse(new RedirectResponse($url, 302));
+=======
+          $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => TRUE))->toString();
+          $event->setResponse(new TrustedRedirectResponse($url, 302));
+        }elseif($redirect == FALSE){
+          if(!empty($request->query->get('destination'))){
+            return;
+          }
+          $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => FALSE))->toString();
+          $event->setResponse(new TrustedRedirectResponse($url, 302));
+>>>>>>> 0e4abbec11f4cb5b2b9adffbb5bbe15169a286d5
         }
 
         // Store the response in the page cache.
