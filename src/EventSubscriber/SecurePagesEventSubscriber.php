@@ -58,6 +58,12 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
           $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => TRUE))->toString();
           $event->setResponse(new TrustedRedirectResponse($url, 302));
         }elseif($redirect == FALSE){
+
+          //If parameter "destination" is set, don't force redirect to HTTP.
+          //This prevents a loop when the user is logged in without SSL and then needs to login with SSL.
+          if(!empty($request->query->get('destination'))){
+            return;
+          }
           $url = Url::fromUri($uri, array('absolute' => TRUE, 'https' => FALSE))->toString();
           $event->setResponse(new TrustedRedirectResponse($url, 302));
         }
