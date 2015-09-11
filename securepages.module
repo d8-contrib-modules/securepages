@@ -19,9 +19,9 @@ function securepages_form_alter(&$form, &$form_state, $form_id) {
     return;
   }
 
-  $securepages_can_alter_url = $securepagesservice->securepages_can_alter_url($form['#action']);
+  $securePagesCanAlterUrl = $securepagesservice->securePagesCanAlterUrl($form['#action']);
 
-  if (isset($form['#action']) && $securepages_can_alter_url) {
+  if (isset($form['#action']) && $securePagesCanAlterUrl) {
 
     // Remove the base_path, and extract the path component.
     $url = substr(rawurldecode($form['#action']), strlen(base_path()));
@@ -78,7 +78,7 @@ function securepages_match_form($form_id, $args = array()) {
 
   $form_match = \Drupal::service('path.matcher')->matchPath($form_id, $securepages_forms);
   if ($form_match) {
-    $securepagesservice->securepages_log('Secure Form (Form: "@path", Line: @line, Pattern: "@pattern")', $form_id, $securepages_forms);
+    $securepagesservice->securePagesLog('Secure Form (Form: "@path", Line: @line, Pattern: "@pattern")', $form_id, $securepages_forms);
     return TRUE;
   }
 
@@ -93,7 +93,7 @@ function securepages_match_form($form_id, $args = array()) {
 
     $form_callback_match = \Drupal::service('path.matcher')->matchPath($form_definition['callback'], $securepages_forms);
     if ($form_callback_match) {
-      $securepagesservice->securepages_log('Secure Form (Path: "@path", Line: @line, Pattern: "@pattern")', $form_definition['callback'], $securepages_forms);
+      $securepagesservice->securePagesLog('Secure Form (Path: "@path", Line: @line, Pattern: "@pattern")', $form_definition['callback'], $securepages_forms);
       return TRUE;
     }
   }
