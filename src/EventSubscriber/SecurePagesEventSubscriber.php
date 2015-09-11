@@ -52,14 +52,17 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
+      $request = $event->getRequest();
 
         if(is_null($redirect)) {
 
         }elseif($redirect == TRUE) {
-          $url = Url::fromUri($event->getRequest()->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
+          //Unset destination parameter so this won't redirect in this request
+          $request->query->remove('destination');
+          $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => TRUE))->toString();
           $event->setResponse(new RedirectResponse($url, 302));
         }elseif($redirect == FALSE){
-          $url = Url::fromUri($event->getRequest()->getUri(), array('absolute' => TRUE, 'https' => FALSE))->toString();
+          $url = Url::fromUri($request->getUri(), array('absolute' => TRUE, 'https' => FALSE))->toString();
           $event->setResponse(new RedirectResponse($url, 302));
         }
 
