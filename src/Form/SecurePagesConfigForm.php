@@ -84,27 +84,44 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#description' => $this->t(''),
       '#default_value' => $config->get('securepages_basepath_ssl'),
     );
-    $form['securepages_pages'] = array(
+    $form['securepages_entire_site'] = array(
+      '#type' => 'radios',
+      '#title' => $this->t('Force SSL to the entire site'),
+      '#description' => $this->t('Select if SSL should be forced for the entire site or granular to specific contexts.'),
+      '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
+      '#default_value' => $config->get('securepages_entire_site'),
+    );
+
+    $form['securepages_granular_settings'] =  array(
+      '#type' => 'container',
+      '#states' => array(
+        // Hide the granular settings if user selected to force SSL for entire site.
+        'invisible' => array(
+          'input[name="securepages_entire_site"]' => array('value' => 1),
+        ),
+      ),
+    );
+    $form['securepages_granular_settings']['securepages_pages'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Pages'),
       '#description' => $this->t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are '<em>blog</em>' for the main blog page and '<em>blog/*</em>' for every personal blog. '<em>&lt;front&gt;</em>' is the front page."),
       '#default_value' => $config->get('securepages_pages'),
     );
-    $form['securepages_secure'] = array(
+    $form['securepages_granular_settings']['securepages_secure'] = array(
       '#type' => 'radios',
       '#title' => $this->t('Pages which will be be secure'),
       '#description' => $this->t(''),
       '#options' => array($this->t('Make secure every page except the listed pages above') ,  $this->t('Make secure only the listed pages above')),
       '#default_value' => $config->get('securepages_secure'),
     );
-    $form['securepages_switch'] = array(
+    $form['securepages_granular_settings']['securepages_switch'] = array(
       '#type' => 'radios',
       '#title' => $this->t('Switch back to http pages when there are no matches to list of pages above.'),
       '#description' => $this->t(''),
       '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
       '#default_value' => $config->get('securepages_switch'),
     );
-    $form['securepages_ignore'] = array(
+    $form['securepages_granular_settings']['securepages_ignore'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Ignore pages'),
       '#description' => $this->t("The pages listed here will be ignored and be either returned in http or https. Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are '<em>blog</em>' for the blog page and '<em>blog/*</em>' for every personal blog. '<em>&lt;front&gt;</em>' is the front page."),
@@ -117,14 +134,14 @@ class SecurePagesConfigForm extends ConfigFormBase {
     foreach ($roles as $role) {
       $role_options[$role->id()] = $role->label();
     }
-    $form['securepages_roles'] = array(
+    $form['securepages_granular_settings']['securepages_roles'] = array(
       '#type' => 'checkboxes',
       '#title' => 'User roles',
       '#description' => t('Users with the chosen role(s) are always redirected to https, regardless of path rules.'),
       '#options' => $role_options, //array_map('\Drupal\Core\Utility\String::checkPlain', $role_options),
       '#default_value' => $config->get('securepages_roles'),
     );
-    $form['securepages_forms'] = array(
+    $form['securepages_granular_settings']['securepages_forms'] = array(
       '#type' => 'textarea',
       '#title' => t('Secure forms'),
       '#default_value' => $config->get('securepages_forms'),
@@ -157,6 +174,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
     $this->config('securepages.settings')
       ->set('securepages_enable', $form_state->getValue('securepages_enable'))
       ->set('securepages_switch', $form_state->getValue('securepages_switch'))
+      ->set('securepages_entire_site', $form_state->getValue('securepages_entire_site'))
       ->set('securepages_basepath', $form_state->getValue('securepages_basepath'))
       ->set('securepages_basepath_ssl', $form_state->getValue('securepages_basepath_ssl'))
       ->set('securepages_secure', $form_state->getValue('securepages_secure'))
