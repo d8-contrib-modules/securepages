@@ -8,7 +8,6 @@
 namespace Drupal\securepages;
 
 use Drupal\Component\Utility\Unicode;
-use \Drupal\Component\Utility\UrlHelper;
 
 class SecurePagesService {
   protected $config;
