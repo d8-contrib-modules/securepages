@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\blindd8\BlindD8ingService.
+ * Contains \Drupal\securepages\SecurePagesService.
  */
 
 namespace Drupal\securepages;
