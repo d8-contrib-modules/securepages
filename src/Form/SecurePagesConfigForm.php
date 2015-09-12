@@ -32,7 +32,6 @@ class SecurePagesConfigForm extends ConfigFormBase {
   ) {
     parent::__construct($config_factory);
     $this->securepages_securepagesservice = $securepages_securepagesservice;
-    $this->is_https = \Drupal::request()->isSecure();
   }
 
   public static function create(ContainerInterface $container) {
