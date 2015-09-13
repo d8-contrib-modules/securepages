@@ -21,22 +21,6 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
     $current_path = \Drupal::service('path.current')->getPath();
 
-    // Special path for verifying SSL status.
-    if ($current_path == 'admin/config/system/securepages/test') {
-      if (\Drupal::request()->isSecure()) {
-        // @TODO: Update
-        //header('HTTP/1.1 200 OK');
-        $response->setStatusCode('200');
-        $response->send();
-      }
-      else {
-        // @TODO: Update
-        //header('HTTP/1.1 404 Not Found');
-        $response->setStatusCode('404');
-        $response->send();
-      }
-    }
-
     $config = \Drupal::config('securepages.settings');
     $securepages_enable = $config->get('securepages_enable');
 
@@ -44,10 +28,9 @@ class SecurePagesEventSubscriber implements EventSubscriberInterface {
 
       $securepagesservice = \Drupal::service('securepages.securepagesservice');
       $redirect = $securepagesservice->securePagesRedirect();
-      $securePagesBaseUrl = $securepagesservice->securePagesBaseUrl($redirect);
       $request = $event->getRequest();
       //Replaces current URL with the one defined in the module's settings page.
-      $uri = str_replace($request->getSchemeAndHttpHost(), $securePagesBaseUrl, $request->getUri());
+      $uri = $securepagesservice->securePagesGenerateUrl($request->getSchemeAndHttpHost(), $request->getUri(), $redirect);
 
         if(is_null($redirect)) {
 
