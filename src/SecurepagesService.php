@@ -2,14 +2,19 @@
 
 /**
  * @file
- * Contains \Drupal\blindd8\BlindD8ingService.
+ * Contains \Drupal\securepages\SecurePagesService.
  */
 
 namespace Drupal\securepages;
 
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Url;
+use GuzzleHttp\Exception\RequestException;
 
 class SecurePagesService {
+
+  const SECURE_PAGES_TEST_HTTPS_CONNECTION_ROUTE = 'securepages.secure_pages_test_https_connection';
+
   protected $config;
   protected $is_https;
   protected $path;
@@ -18,7 +23,6 @@ class SecurePagesService {
   protected $securepages_basepath;
   protected $securepages_basepath_ssl;
   protected $request_method;
-  protected $base_url;
   protected $securepages_secure;
   protected $securepages_pages;
   protected $securepages_ignore;
@@ -27,10 +31,16 @@ class SecurePagesService {
   protected $langcode;
 
   public function __construct() {
-    $this->config = \Drupal::config('securepages.settings');
+    $this->initializeValuesFromConfig();
     $this->is_https = \Drupal::request()->isSecure();
     $this->request_method = \Drupal::request()->getMethod();
-    $this->path = \Drupal::service('path.current')->getPath() ? \Drupal::service('path.current')->getPath() : '';
+    $this->path = \Drupal::service('path.current')
+      ->getPath() ? \Drupal::service('path.current')->getPath() : '';
+    $this->langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  }
+
+  public function initializeValuesFromConfig(){
+    $this->config = \Drupal::config('securepages.settings');
     $this->securepages_switch = $this->config->get('securepages_switch');
     $this->securepages_entire_site = $this->config->get('securepages_entire_site');
     $this->securepages_basepath = $this->config->get('securepages_basepath');
@@ -40,46 +50,58 @@ class SecurePagesService {
     $this->securepages_ignore = $this->config->get('securepages_ignore');
     $this->securepages_roles = $this->config->get('securepages_roles');
     $this->securepages_debug = $this->config->get('securepages_debug');
-    $this->langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
   }
 
   public function securePagesRedirect() {
 
-    //If user selected to force SSL for the entire site, there's no need to check pages and roles
-    if(!$this->securepages_entire_site) {
-      $current_path = \Drupal::service('path.current')->getPath();
+    $current_path = \Drupal::service('path.current')->getPath();
+
+    $current_route_name = \Drupal::routeMatch()->getRouteName();
+
+    //If user selected to force SSL for the entire site or
+    //current page is the HTTPS test page,
+    //there's no need to check pages and roles.
+    if (!$this->securepages_entire_site && $current_route_name !== $this::SECURE_PAGES_TEST_HTTPS_CONNECTION_ROUTE) {
       $account = \Drupal::currentUser();
 
       $page_match = $this->securePagesMatch($current_path);
       $role_match = $this->securePagesRoles($account);
-    }else{
+    }
+    else {
       $page_match = TRUE;
       $role_match = TRUE;
     }
 
-    if($this->request_method == 'POST') {
+    if ($this->request_method == 'POST') {
       $this->securePagesLog('POST request skipped in service', $this->path);
 
-    }elseif ($this->securepages_entire_site && !$this->is_https) {
-      $this->securePagesLog('Switch to secure(force SSL for entire site)', $this->path);
-      return TRUE;
-    }elseif ($role_match && !$this->is_https) {
-      $this->securePagesLog('Switch User to secure', $this->path);
-      return TRUE;
     }
-    elseif ($page_match && !$this->is_https) {
-      $this->securePagesLog('Switch Path to secure', $this->path);
-      return TRUE;
+    elseif ($this->is_https) {
+      //Conditions for when current page is using HTTPS.
+
+      if ($page_match === 0 && $this->securepages_switch && !$role_match) {
+        $this->securePagesLog('Switch Path to insecure (Path: "@path")', $this->path);
+        return FALSE;
+      }
     }
-    elseif ($page_match === 0 && $this->is_https && $this->securepages_switch && !$role_match) {
-      $this->securePagesLog('Switch Path to insecure (Path: "@path")', $this->path);
-      return FALSE;
+    else {
+      //Conditions for when current page is NOT using HTTPS
+
+      if ($this->securepages_entire_site) {
+        $this->securePagesLog('Switch to secure(force SSL for entire site)', $this->path);
+        return TRUE;
+      }
+      elseif ($role_match) {
+        $this->securePagesLog('Switch User to secure', $this->path);
+        return TRUE;
+      }
+      elseif ($page_match) {
+        $this->securePagesLog('Switch Path to secure', $this->path);
+        return TRUE;
+      }
+
     }
 
-    // Correct the base_url so that everything comes from HTTPS.
-    if ($this->is_https) {
-      $this->base_url = $this->securePagesBaseUrl();
-    }
     return NULL;
 
   }
@@ -111,33 +133,39 @@ class SecurePagesService {
 
     if ($this->securepages_ignore) {
 
-      $result = \Drupal::service('path.matcher')->matchPath($path, $this->securepages_ignore);
+      $result = \Drupal::service('path.matcher')
+        ->matchPath($path, $this->securepages_ignore);
 
       if (!$result) {
 
-        $path_alias =  \Drupal::service('path.alias_manager')->getAliasByPath('/'.$path, $this->langcode) ;
-         // @TODO: https://www.drupal.org/node/2531732
-        if(Unicode::substr($path_alias, 0, 1) == "/") {
+        $path_alias = \Drupal::service('path.alias_manager')
+          ->getAliasByPath('/' . $path, $this->langcode);
+        // @TODO: https://www.drupal.org/node/2531732
+        if (Unicode::substr($path_alias, 0, 1) == "/") {
           $path_alias = Unicode::substr($path_alias, 1);
         }
-        $result = \Drupal::service('path.matcher')->matchPath($path_alias, $this->securepages_ignore);
+        $result = \Drupal::service('path.matcher')
+          ->matchPath($path_alias, $this->securepages_ignore);
 
 
-       }
-       if ($result) {
-         //$this->securePagesLog('Ignored path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_ignore);
-         return $this->is_https ? 1 : 0;
-       }
+      }
+      if ($result) {
+        //$this->securePagesLog('Ignored path (Path: "@path", Line: @line, Pattern: "@pattern")', $path_alias, $this->securepages_ignore);
+        return $this->is_https ? 1 : 0;
+      }
     }
 
     if ($this->securepages_pages) {
-      $result = \Drupal::service('path.matcher')->matchPath($path, $this->securepages_pages);
+      $result = \Drupal::service('path.matcher')
+        ->matchPath($path, $this->securepages_pages);
       if (!$result) {
-        $path_alias =  \Drupal::service('path.alias_manager')->getAliasByPath('/'.$path, $this->langcode) ;
-        if(Unicode::substr($path_alias, 0, 1) == "/") {
+        $path_alias = \Drupal::service('path.alias_manager')
+          ->getAliasByPath('/' . $path, $this->langcode);
+        if (Unicode::substr($path_alias, 0, 1) == "/") {
           $path_alias = Unicode::substr($path_alias, 1);
         }
-        $result = \Drupal::service('path.matcher')->matchPath($path_alias, $this->securepages_pages);
+        $result = \Drupal::service('path.matcher')
+          ->matchPath($path_alias, $this->securepages_pages);
       }
 
       if (!($this->securepages_secure xor $result)) {
@@ -145,14 +173,15 @@ class SecurePagesService {
       }
 
       return !($this->securepages_secure xor $result) ? 1 : 0;
-     }
-     else {
-       return;
-     }
+    }
+    else {
+      return;
+    }
 
 
   }
-   /**
+
+  /**
    * Checks if the user is in a role that is always forced onto HTTPS.
    *
    *   A valid user object.
@@ -161,7 +190,7 @@ class SecurePagesService {
    */
   public function securePagesRoles($account) {
 
-    if(!$account){
+    if (!$account) {
       $account = \Drupal::currentUser();
     }
     $account_roles = $account->getRoles();
@@ -170,7 +199,7 @@ class SecurePagesService {
     // that aren't enabled. Otherwise this would match positive against all
     // roles a user has set.
     $keyed_account_roles = [];
-    foreach($account_roles as $role) {
+    foreach ($account_roles as $role) {
       $keyed_account_roles[Unicode::strtolower($role)] = $role;
     }
 
@@ -241,18 +270,19 @@ class SecurePagesService {
       );
       if ($pattern) {
         // @todo: check to make sure the path doesn't have a preceding slash
-        if(Unicode::substr($path, 0, 1) == "/") {
+        if (Unicode::substr($path, 0, 1) == "/") {
           //$path = Unicode::substr($path, 1);
         }
         if (!\Drupal::service('path.matcher')->matchPath($path, $pattern)) {
-          $path = \Drupal::service('path.alias_manager')->getAliasByPath($path, 'en');
+          $path = \Drupal::service('path.alias_manager')
+            ->getAliasByPath($path, 'en');
         }
 
         $pattern_parts = explode("\n", $pattern);
         foreach ($pattern_parts as $line => $part) {
 
           if (\Drupal::service('path.matcher')->matchPath($path, $part)) {
-            $options['@line'] = $line+1;
+            $options['@line'] = $line + 1;
             $options['@pattern'] = $part;
             break;
           }
@@ -261,5 +291,37 @@ class SecurePagesService {
     }
   }
 
+  /**
+   * Generates the proper URL for the current page based on the settings for this module.
+   * @param $schemeAndHost The scheme and host to be replaced.
+   * @param $uri The uri to be changed.
+   * @return string The URL formatted with the module configurations.
+   */
+  public function securePagesGenerateUrl($schemeAndHost, $uri, $secure){
+    return str_replace($schemeAndHost, $this->securePagesBaseUrl($secure), $uri);
+  }
+
+  /**
+   * @return bool TRUE if test HTPPS connection returns 200, FALSE otherwise.
+   */
+  public function securePagesTestHttpsConnection() {
+
+    global $base_url;
+
+    //Makes a request for the test HTTPS Connection route.
+    $client = \Drupal::httpClient();
+    try {
+      //Ignores SSL certificate validation.
+      //@TODO Find a better way to handle that. Full discussion at: https://github.com/d8-contrib-modules/securepages/issues/6
+      $options = array('verify' => FALSE);
+
+      $testHttpsConnectionUrl = Url::fromRoute($this::SECURE_PAGES_TEST_HTTPS_CONNECTION_ROUTE, array(), array('absolute' => TRUE))->toString();
+      $request = $client->request('GET', $this->securePagesGenerateUrl($base_url, $testHttpsConnectionUrl, TRUE), $options);
+    }
+    catch (RequestException $e) {
+      return FALSE;
+    }
+    return method_exists($request, 'getStatusCode') && $request->getStatusCode() == 200;
+  }
 
 }

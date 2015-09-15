@@ -25,14 +25,16 @@ class SecurePagesConfigForm extends ConfigFormBase {
    *
    * @var Drupal\securepages\SecurePagesService
    */
-  protected $securepages_securepagesservice;
+  protected $securePagesService;
+  protected $securePagesHttpsEnabled;
+
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    SecurePagesService $securepages_securepagesservice
+    SecurePagesService $securePagesService
   ) {
     parent::__construct($config_factory);
-    $this->securepages_securepagesservice = $securepages_securepagesservice;
-    $this->is_https = \Drupal::request()->isSecure();
+    $this->securePagesService = $securePagesService;
+    $this->securePagesHttpsEnabled = $this->securePagesService->securePagesTestHttpsConnection();
   }
 
   public static function create(ContainerInterface $container) {
@@ -70,6 +72,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#title' => $this->t('Enable Secure Pages'),
       '#description' => $this->t('To start using secure pages this setting must be enabled. This setting will only be able to changed when the web server has been configured for SSL.<br />If this test has failed then these options will not be available. Check your web server settings.'),
       '#options' => array(1 => $this->t('Yes'), 0 => $this->t('No')),
+      '#disabled' => !$this->securePagesHttpsEnabled,
       '#default_value' => $config->get('securepages_enable'),
     );
     $form['securepages_basepath'] = array(
@@ -92,7 +95,7 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('securepages_entire_site'),
     );
 
-    $form['securepages_granular_settings'] =  array(
+    $form['securepages_granular_settings'] = array(
       '#type' => 'container',
       '#states' => array(
         // Hide the granular settings if user selected to force SSL for entire site.
@@ -111,7 +114,10 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#type' => 'radios',
       '#title' => $this->t('Pages which will be be secure'),
       '#description' => $this->t(''),
-      '#options' => array($this->t('Make secure every page except the listed pages above') ,  $this->t('Make secure only the listed pages above')),
+      '#options' => array(
+        $this->t('Make secure every page except the listed pages above'),
+        $this->t('Make secure only the listed pages above')
+      ),
       '#default_value' => $config->get('securepages_secure'),
     );
     $form['securepages_granular_settings']['securepages_switch'] = array(
@@ -138,7 +144,8 @@ class SecurePagesConfigForm extends ConfigFormBase {
       '#type' => 'checkboxes',
       '#title' => 'User roles',
       '#description' => t('Users with the chosen role(s) are always redirected to https, regardless of path rules.'),
-      '#options' => $role_options, //array_map('\Drupal\Core\Utility\String::checkPlain', $role_options),
+      '#options' => $role_options,
+      //array_map('\Drupal\Core\Utility\String::checkPlain', $role_options),
       '#default_value' => $config->get('securepages_roles'),
     );
     $form['securepages_granular_settings']['securepages_forms'] = array(
@@ -184,6 +191,21 @@ class SecurePagesConfigForm extends ConfigFormBase {
       ->set('securepages_forms', $form_state->getValue('securepages_forms'))
       ->set('securepages_debug', $form_state->getValue('securepages_debug'))
       ->save();
+
+    //If secure URL changed and secure pages is enabled, checks if new secure
+    //URL supports SSL. If it doesn't, disable secure pages.
+    if($form_state->getValue('securepages_enable') && $form_state->getValue('securepages_basepath_ssl') != $form['securepages_basepath_ssl']['#default_value']){
+      //Initialize values from config so the service can use the updated values.
+      $this->securePagesService->initializeValuesFromConfig();
+
+      $testHttpsConnectionNewUrl = $this->securePagesService->securePagesTestHttpsConnection();
+      if(!$testHttpsConnectionNewUrl){
+        $this->config('securepages.settings')
+          ->set('securepages_enable', 0)
+          ->save();
+        drupal_set_message($this->t('The chosen Secure Base URL can\'t provided HTTPS pages successfully. Forcing secure pages was disabled.'));
+      }
+    }
   }
 
 }

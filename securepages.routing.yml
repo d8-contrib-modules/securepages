@@ -5,4 +5,10 @@ securepages.secure_pages_config_form:
     _title: 'Secure Pages Config Form'
   requirements:
     _permission: 'access administration pages'
-
+securepages.secure_pages_test_https_connection:
+  path: '/securepages/test'
+  defaults:
+    _controller: '\Drupal\securepages\Controller\SecurePagesController::testHttpsConnection'
+    _title: 'Testing HTTPS connection'
+  requirements:
+    _access: 'TRUE'
